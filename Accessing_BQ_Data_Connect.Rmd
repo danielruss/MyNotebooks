@@ -1,0 +1,41 @@
+---
+title: "Accessing BQ data For Connect"
+output:
+  html_document:
+    df_print: paged
+---
+
+A primer for accessing Connect data for the Analytics team
+
+Step 1: load the required libraries.  You always need the tidyverse, and also the 
+R client-side SDK (bigrquery)
+
+```{r}
+library(tidyverse)
+library(bigrquery)
+```
+
+Step 2: Before we do anything with, we need to authenticate with gcp.
+
+```{r}
+bq_auth()
+```
+
+Step 3: We are ready to prepare the query.  Because we get charge for the amount data bq processes, not the amount of returned results, only query the columns you need.  Avoid useing "*" unless you actually require all the columns. Using the 'limit' clause does not save any money
+
+When you make a query, BQ saves the results in a temporary table.  If you make the same query again, you are just pulling data from the temporary table not re-querying the data.  We are going to need a project. The DCEG connect analysts can use our dev-project.  If you are not in the connect analyst group, you will need to change the project to your own project (although you probably wont have access to the data either)
+
+
+```{r}
+    project <- "nih-nci-dceg-connect-dev"
+    query <- "SELECT D_820324171, D_769668224 FROM `nih-nci-dceg-connect-dev.M2.flat_M2`"
+    tb <- bigrquery::bq_project_query(project, query)
+    data <- bigrquery::bq_table_download(tb, bigint = "integer64")
+```
+
+now we have the data!
+
+```{r}
+data %>% filter(!is.na(D_820324171))
+```
+
